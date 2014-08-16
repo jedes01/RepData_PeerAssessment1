@@ -21,8 +21,8 @@ averageSteps <- aggregate(data$steps, by=list(data$day), function(x) sum(x, na.r
 ggplot(averageSteps, aes(x)) + geom_histogram(binwidth=2000) + 
         labs(title="Histogram of Steps/Interval\n(Binwidth = 2000)", x = "Steps", y = "Count") +
         theme(plot.title = element_text(face="bold"))
-meanAverage <- mean(averageSteps$x, na.rm=T)
-medianAverage <- median(averageSteps$x, na.rm=T)
+meanAverage <- round(mean(averageSteps$x, na.rm=T),1)
+medianAverage <- round(median(averageSteps$x, na.rm=T),1)
 
 ## Steps per Interval
 intervalMeans <- aggregate(data$steps, list(data$interval), function(x) mean(x, na.rm=T))
@@ -58,7 +58,7 @@ ggplot(averageImpSteps, aes(x)) + geom_histogram(binwidth=2000) +
         labs(title="Histogram of Steps/Interval\n(Binwidth = 2000)", x = "Steps", y = "Count") +
         theme(plot.title = element_text(face="bold"))
 meanImpAverage <- round(mean(averageImpSteps$x, na.rm=T),1)
-medianImpAverage <- median(averageImpSteps$x, na.rm=T)
+medianImpAverage <- round(median(averageImpSteps$x, na.rm=T),1)
 
 ## Where are the NAs? (turns out there are eight single-day chunks missing)
 

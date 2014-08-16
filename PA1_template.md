@@ -50,7 +50,7 @@ ggplot(averageSteps, aes(x)) + geom_histogram(binwidth=2000) +
 
 ```r
 meanAverage <- round(mean(averageSteps$x, na.rm=T),1)
-medianAverage <- median(averageSteps$x, na.rm=T)
+medianAverage <- round(median(averageSteps$x, na.rm=T),1)
 ```
 
 By this method, we get an average daily mean of 9354.2 and an average daily median of 10395.  We can double-check that these look plausible based on the histogram (I think they do!).
@@ -146,12 +146,12 @@ ggplot(averageImpSteps, aes(x)) + geom_histogram(binwidth=2000) +
 
 ```r
 meanImpAverage <- round(mean(averageImpSteps$x, na.rm=T),1)
-medianImpAverage <- median(averageImpSteps$x, na.rm=T)
+medianImpAverage <- round(as.numeric(median(averageImpSteps$x, na.rm=T)),1)
 ```
 
-The mean average, including the imputed values, is 1.0766 &times; 10<sup>4</sup>, and the new median is 1.0766 &times; 10<sup>4</sup>.  The mean increased, while the median stayed the same.
+The mean average, including the imputed values, is 10766.2, and the new median is 10766.2.  The mean increased a lot, while the median increased a little to match the mean.
 
-### Sidebar: Why did the median stay the same, while the mean went up?
+### Sidebar: Why are the mean and median the same now?
 
 The distribution of the NAs holds the answer:
 
@@ -163,7 +163,7 @@ plot(dayNAs$x, xlab="Day", ylab="Total NAs", main="NAs per Day")
 
 ![plot of chunk unnamed-chunk-9](figure/unnamed-chunk-9.png) 
 
-As can be seen from the plot above, the NAs were concentrated in eight day-long chunks.  Hence, the original mean and median included all of those days as 0-step days.  Imputing each of those days to an average day (9354.2) doesn't change the median, since they're still below the "center value" but adds an additional 8 average means worth of steps (7.4834 &times; 10<sup>4</sup>) steps to the numerator that will get divided by 61 to calculate the new imputed mean.
+As can be seen from the plot above, the NAs were concentrated in eight day-long chunks.  Hence, the original mean and median included all of those days as 0-step days.  Imputing each of those days to an average day turns those zeroes--and the overall mean--into the average of the other 53 days (10766.2). Adding eight new identical central-ish values then made it exceedingly likely that the new imputed median would hit on one of them as the middle value.
 
 ## Are there differences in activity patterns between weekdays and weekends?
 
@@ -186,4 +186,4 @@ p
 
 ![plot of chunk unnamed-chunk-10](figure/unnamed-chunk-10.png) 
 
-At first glance, the graphic seems to show that folks seem to get up and go to bed a little later as well as be more active throughout the day on weekends.
+At first glance, the graphic seems to show that our subject gets up and goes to bed a little later as well as being more active throughout the day on weekends. Since I'm writing this in bed at 10am on a Saturday, that sounds pretty plausible to me!
