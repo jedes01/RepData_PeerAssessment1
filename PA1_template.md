@@ -14,7 +14,8 @@ This chunk of code produces no output, but it downloads the data from the course
 - It adds a factor variable called "day" recording which day of the experiment (1-61) on which a measurement was taken.
 
 
-```{r,echo=TRUE, cache=TRUE}
+
+```r
 # Load necessary packages
 library(plyr)
 library(ggplot2)
@@ -37,58 +38,85 @@ data$day <- factor(cut(data$fancyDate, breaks="day", labels=F))
 
 To get a handle on this question, this code generates a histogram showing the relative frequency of each number of daily steps, then calculates the mean and median daily values.
 
-```{r,echo=TRUE}
+
+```r
 averageSteps <- aggregate(data$steps, by=list(data$day), function(x) sum(x, na.rm=T))
 ggplot(averageSteps, aes(x)) + geom_histogram(binwidth=2000) + 
         labs(title="Histogram of Steps/Interval\n(Binwidth = 2000)", x = "Steps", y = "Count") +
         theme(plot.title = element_text(face="bold"))
+```
+
+![plot of chunk unnamed-chunk-2](figure/unnamed-chunk-2.png) 
+
+```r
 meanAverage <- round(mean(averageSteps$x, na.rm=T),1)
 medianAverage <- median(averageSteps$x, na.rm=T)
 ```
 
-By this method, we get an average daily mean of `r meanAverage` and an average daily median of `r medianAverage`.  We can double-check that these look plausible based on the histogram (I think they do!).
+By this method, we get an average daily mean of 9354.2 and an average daily median of 10395.  We can double-check that these look plausible based on the histogram (I think they do!).
 
 ## What is the average daily activity pattern?
 
 This chunk of code uses the `aggregate` function to calculate the mean steps for each 5-minute interval, taking the average across all 61 days.  The results of that calculation are then plotted as a time series.
 
-```{r, echo=TRUE}
+
+```r
 intervalMeans <- aggregate(data$steps, list(data$interval), function(x) mean(x, na.rm=T))
 names(intervalMeans) <- c("interval","intervalMean")
 plot.ts(intervalMeans$intervalMean, xlab="Nth 5-Minute Interval of the Day", ylab="Mean Steps",
         main="Mean Steps per 5-Minute Interval")
+```
+
+![plot of chunk unnamed-chunk-3](figure/unnamed-chunk-3.png) 
+
+```r
 peakMean <- round(max(intervalMeans$intervalMean),1)
 peakInterval <- which.max(intervalMeans$intervalMean)
 ```
 
-The highest average (`r peakMean`) occurs at interval #`r peakInterval`.
+The highest average (206.2) occurs at interval #104.
 
 ## Imputing missing values
 
 First of all, we check to see if there are NA values in the dataset
 
-```{r, echo=TRUE}
+
+```r
 totalNAs <- sum(is.na(data))
 ```
 
 Turns out there are `totalNAs` NA values in the dataset! The next step is to see which columns hold those NA values:
 
-```{r, echo=TRUE}
+
+```r
 columnNAs <- sapply(1:5, function(x) sum(is.na(data[,x])))
 print(columnNAs)
 ```
 
+```
+## [1] 2304    0    0    0    0
+```
+
 So all of the NAs live in the first column--that is, "steps"--so there are `totalNAs` incomplete cases in the dataset.  The code below imputes the mean value for that interval to those rows where we have missing data and stores the new values in a column called "imputedData."
 
-```{r, echo=TRUE}
+
+```r
 data <- join(data, intervalMeans)
+```
+
+```
+## Joining by: interval
+```
+
+```r
 data$imputedSteps <- data$steps
 data$imputedSteps[which(is.na(data$steps))] <- data$intervalMean[which(is.na(data$steps))]
 ```
 
 The rest of the data analysis will take place in a copy of the original data frame called "newData" with the original "steps" column replaced by the "imputedSteps".  The code for generating and processing that copy is below (same steps as were taken with the original data frame above).
 
-```{r, echo=TRUE}
+
+```r
 ## Create new dataset with imputed values
 newData <- data.frame(data$imputedSteps, data$date, as.numeric(as.character(data$interval)))
 names(newData) <- c("steps", "date", "interval")
@@ -100,35 +128,49 @@ newData$interval <- factor(data$interval)
 newData <- join(data, intervalMeans)
 ```
 
+```
+## Joining by: interval, intervalMean
+```
+
 The code below uses the same steps as above to create a histogram of the average steps per day over each of the 61 days, then calculates a mean and median for those averages; however, what were NAs have been replaced by imputed values.
 
-```{r, echo=TRUE}
+
+```r
 averageImpSteps <- aggregate(newData$imputedSteps, list(newData$day), function(x) sum(x, na.rm=T))
 ggplot(averageImpSteps, aes(x)) + geom_histogram(binwidth=2000) +
         labs(title="Histogram of Steps/Interval\n(Binwidth = 2000)", x = "Steps", y = "Count") +
         theme(plot.title = element_text(face="bold"))
+```
+
+![plot of chunk unnamed-chunk-8](figure/unnamed-chunk-8.png) 
+
+```r
 meanImpAverage <- round(mean(averageImpSteps$x, na.rm=T),1)
 medianImpAverage <- median(averageImpSteps$x, na.rm=T)
 ```
 
-The mean average, including the imputed values, is `r meanImpAverage`, and the new median is `r medianImpAverage`.  The mean increased, while the median stayed the same.
+The mean average, including the imputed values, is 1.0766 &times; 10<sup>4</sup>, and the new median is 1.0766 &times; 10<sup>4</sup>.  The mean increased, while the median stayed the same.
 
 ### Sidebar: Why did the median stay the same, while the mean went up?
 
 The distribution of the NAs holds the answer:
 
-```{r, echo=TRUE}
+
+```r
 dayNAs <- aggregate(newData$steps, list(newData$day), function(x) sum(is.na(x)))
 plot(dayNAs$x, xlab="Day", ylab="Total NAs", main="NAs per Day")
 ```
 
-As can be seen from the plot above, the NAs were concentrated in eight day-long chunks.  Hence, the original mean and median included all of those days as 0-step days.  Imputing each of those days to an average day (`r meanAverage`) doesn't change the median, since they're still below the "center value" but adds an additional 8 average means worth of steps (`r 8*meanAverage`) steps to the numerator that will get divided by 61 to calculate the new imputed mean.
+![plot of chunk unnamed-chunk-9](figure/unnamed-chunk-9.png) 
+
+As can be seen from the plot above, the NAs were concentrated in eight day-long chunks.  Hence, the original mean and median included all of those days as 0-step days.  Imputing each of those days to an average day (9354.2) doesn't change the median, since they're still below the "center value" but adds an additional 8 average means worth of steps (7.4834 &times; 10<sup>4</sup>) steps to the numerator that will get divided by 61 to calculate the new imputed mean.
 
 ## Are there differences in activity patterns between weekdays and weekends?
 
 Finally, this code creates a factor variable labeling the day of the week of the date for each row, and a second factor variable identifying whether or not the date is a weekend.  The mean value for each interval is then calculated separately for weekdays and weekends, then plotted to produce a graphic comparing average daily activity on weekdays and weekends.
 
-```{r, echo=TRUE}
+
+```r
 newData$dayOfWeek <- weekdays(newData$fancyDate)
 newData$isWeekend <- as.factor(newData$dayOfWeek %in% c("Saturday", "Sunday"))
 levels(newData$isWeekend) <- c("weekday","weekend")
@@ -141,5 +183,7 @@ p <- p + xlab("Interval") + ylab ("Number of Steps") +
         theme(plot.title = element_text(face="bold"))
 p
 ```
+
+![plot of chunk unnamed-chunk-10](figure/unnamed-chunk-10.png) 
 
 At first glance, the graphic seems to show that folks seem to get up and go to bed a little later as well as be more active throughout the day on weekends.
